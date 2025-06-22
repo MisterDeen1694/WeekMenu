@@ -1,4 +1,10 @@
 ---
+import { RecipeProducts } from "astro:db";
+import { Product } from "astro:db";
+import { eq } from "astro:db";
+import { Recipe } from "astro:db";
+import { db } from "astro:db";
+
 /*
 Weekmenu Project Goals
 	- Kcal waarden van recept
@@ -17,6 +23,20 @@ Weekmenu Project Goals
 		- Dozeren op aantel personen
 	-I18n (Extra)
 */
+// Get the recpie
+const recipes = await db.select().from(Recipe);
+
+//lookup assosited Products
+const ingerdentsUsed = await db
+	.select()
+	.from(RecipeProducts)
+	.where(eq(RecipeProducts.recpieId, recipes[0].id));
+
+//get the assosited Products
+const ingerdents = await db
+	.select()
+	.from(Product)
+	.where(eq(Product.id, ingerdentsUsed[0].productId));
 ---
 
 <html lang="en">
@@ -28,6 +48,10 @@ Weekmenu Project Goals
 		<title>Astro</title>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<h1>{recipes[0].title}</h1>
+		<p>
+			{ingerdents[0].name} - {ingerdentsUsed[0].amount}
+			{ingerdents[0].measureUnits}
+		</p>
 	</body>
 </html>
