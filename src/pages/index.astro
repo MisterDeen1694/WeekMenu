@@ -1,10 +1,4 @@
 ---
-import { RecipeProducts } from "astro:db";
-import { Product } from "astro:db";
-import { eq } from "astro:db";
-import { Recipe } from "astro:db";
-import { db } from "astro:db";
-
 /*
 Weekmenu Project Goals
 	- Kcal waarden van recept
@@ -12,8 +6,6 @@ Weekmenu Project Goals
 		- Of je wilt kiezen per 5
 		- Of de dag populaten met random recepten en vervang knop toevoegen
 		- Eventuweel een zoek functie over allen recepten
-	- In het recept text hebben staan hoeveel er wat nodig is
-		- B.V. Voeg het water toe(250ml) en roer....
 	- Overzicht Van gekozen recepten
 	- Boodschappen lijstje (per catogarie)
 		- Print versie
@@ -22,21 +14,11 @@ Weekmenu Project Goals
 		- Dozeren op Kcal
 		- Dozeren op aantel personen
 	-I18n (Extra)
+
+Completed Goals:
+	- In het recept text hebben staan hoeveel er wat nodig is
+		- B.V. Voeg het water toe(250ml) en roer....
 */
-// Get the recpie
-const recipes = await db.select().from(Recipe);
-
-//lookup assosited Products
-const ingerdentsUsed = await db
-	.select()
-	.from(RecipeProducts)
-	.where(eq(RecipeProducts.recpieId, recipes[0].id));
-
-//get the assosited Products
-const ingerdents = await db
-	.select()
-	.from(Product)
-	.where(eq(Product.id, ingerdentsUsed[0].productId));
 ---
 
 <html lang="en">
@@ -48,10 +30,6 @@ const ingerdents = await db
 		<title>Astro</title>
 	</head>
 	<body>
-		<h1>{recipes[0].title}</h1>
-		<p>
-			{ingerdents[0].name} - {ingerdentsUsed[0].amount}
-			{ingerdents[0].measureUnits}
-		</p>
+		<h1>Home</h1>
 	</body>
 </html>

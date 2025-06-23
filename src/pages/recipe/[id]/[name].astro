@@ -1,0 +1,161 @@
+---
+// Imports
+import "@/assets/styles/RecipePage.css";
+import {
+	db,
+	Recipe,
+	eq,
+	RecipeIngredient,
+	Ingredient as IngredientTable,
+	RecipeInstruction,
+} from "astro:db";
+import { parseInstruction, formatAmount, slugify } from "@/utils/formatting";
+
+// Url Params
+const { id, name } = Astro.params as { id: string; name: string };
+const portionParam = Astro.url.searchParams.get("portion");
+
+// Querry database get everything related to the Recipe exept
+// for the instructions and check if result is not null
+const result = await db
+	.select({
+		recipeTitle: Recipe.title,
+		recipeAuthor: Recipe.author,
+		recipeSource: Recipe.source,
+		recipeCover: Recipe.cover,
+		recipePortion: Recipe.portionSize,
+		productId: IngredientTable.id,
+		productName: IngredientTable.name,
+		productUnit: IngredientTable.unit,
+		productAmount: RecipeIngredient.amount,
+		productSlug: IngredientTable.slug,
+	})
+	.from(RecipeIngredient)
+	.innerJoin(
+		IngredientTable,
+		eq(RecipeIngredient.ingredientId, IngredientTable.id)
+	)
+	.innerJoin(Recipe, eq(RecipeIngredient.recipeId, Recipe.id))
+	.where(eq(Recipe.id, id));
+
+if (!result.length) {
+	return new Response(null, {
+		status: 404,
+	});
+}
+
+// Fixes url if user did not enter correct slug
+const expectedSlug = slugify(result[0]?.recipeTitle);
+if (name !== expectedSlug) {
+	return Astro.redirect(`/recipe/${id}/${expectedSlug}`);
+}
+
+// Querys the database for all instructions
+const instructions = await db
+	.select({
+		stepNumber: RecipeInstruction.stepNumber,
+		instruction: RecipeInstruction.instruction,
+		image: RecipeInstruction.image,
+	})
+	.from(RecipeInstruction)
+	.where(eq(RecipeInstruction.recipeId, id))
+	.orderBy(RecipeInstruction.stepNumber);
+
+// Group all the information in to a single variable
+const recipe = {
+	title: result[0]?.recipeTitle,
+	author: result[0]?.recipeAuthor,
+	source: result[0]?.recipeSource,
+	cover: result[0]?.recipeCover,
+	portionSize: result[0]?.recipePortion,
+	ingredients: result.map((row) => ({
+		id: row.productId,
+		name: row.productName,
+		unit: row.productUnit,
+		amount: row.productAmount,
+		slug: row.productSlug,
+	})),
+	instructions: instructions.map((step) => ({
+		instruction: step.instruction,
+		image: step.image,
+	})),
+};
+
+// scale ingredients to requested portion
+const portionNumber = portionParam
+	? parseInt(portionParam)
+	: recipe.portionSize;
+const portionMultiplier = portionNumber / recipe.portionSize;
+
+const parsedInstructions = recipe.instructions.map((step) => ({
+	...step,
+	text: parseInstruction(
+		step.instruction,
+		recipe.ingredients,
+		portionMultiplier
+	),
+}));
+
+const scaledIngredients = recipe.ingredients.map((ing) => ({
+	...ing,
+	amount: ing.amount * portionMultiplier,
+}));
+---
+
+<html lang="nl">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{recipe.title}</title>
+	</head>
+	<body class="recipe-page">
+		<h1 class="recipe-page__title">{recipe.title}</h1>
+		<div class="recipe-page__author">
+			Auteur: {recipe.author ?? "Onbekend"}
+		</div>
+		<div class="recipe-page__source">
+			Bron: {recipe.source ?? "Onbekend"}
+		</div>
+
+		{
+			recipe.cover ? (
+				<img
+					src={recipe.cover}
+					alt={`Cover van ${recipe.title}`}
+					class="recipe-page__cover"
+				/>
+			) : null
+		}
+
+		<h2 class="recipe-page__section-title">Ingrediënten</h2>
+		<ul class="recipe-page__ingredients">
+			{
+				scaledIngredients.map((ing) => (
+					<li class="recipe-page__ingredients-item">
+						{ing.name}: {formatAmount(ing.amount)} {ing.unit}
+					</li>
+				))
+			}
+		</ul>
+
+		<h2 class="recipe-page__section-title">Instructies</h2>
+		<ol class="recipe-page__instructions">
+			{
+				parsedInstructions.map((step, index) => (
+					<li class="recipe-page__instructions-item">
+						<p>
+							<strong>Stap {index + 1}:</strong> {step.text}
+						</p>
+						{step.image && (
+							<img
+								src={step.image}
+								alt={`Stap ${index + 1}`}
+								class="recipe-page__instructions-image"
+							/>
+						)}
+					</li>
+				))
+			}
+		</ol>
+	</body>
+</html>

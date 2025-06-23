@@ -4,40 +4,58 @@ const Recipe = defineTable({
 	columns: {
 		id: column.text({ primaryKey: true }),
 		title: column.text(),
-		author: column.text(),
-		source: column.text(),
+		author: column.text({ optional: true }),
+		source: column.text({ optional: true }),
 		cover: column.text(),
+		portionSize: column.number(),
 	},
 });
 
-const Product = defineTable({
+const Ingredient = defineTable({
 	columns: {
 		id: column.text({ primaryKey: true }),
 		name: column.text(),
-		measureUnits: column.text(),
+		unit: column.text(),
+		slug: column.text({ unique: true }),
 	},
 });
 
-const RecipeProducts = defineTable({
+const RecipeIngredient = defineTable({
 	columns: {
 		id: column.text({ primaryKey: true }),
-		recpieId: column.text(),
-		productId: column.text(),
+		recipeId: column.text(),
+		ingredientId: column.text(),
 		amount: column.number(),
 	},
 	foreignKeys: [
 		{
-			columns: ["recpieId"],
+			columns: ["recipeId"],
 			references: () => [Recipe.columns.id],
 		},
 		{
-			columns: ["productId"],
-			references: () => [Product.columns.id],
+			columns: ["ingredientId"],
+			references: () => [Ingredient.columns.id],
+		},
+	],
+});
+
+const RecipeInstruction = defineTable({
+	columns: {
+		id: column.text({ primaryKey: true }),
+		recipeId: column.text(),
+		stepNumber: column.number(),
+		instruction: column.text(),
+		image: column.text({ optional: true }),
+	},
+	foreignKeys: [
+		{
+			columns: ["recipeId"],
+			references: () => [Recipe.columns.id],
 		},
 	],
 });
 
 // https://astro.build/db/config
 export default defineDb({
-	tables: { Recipe, Product, RecipeProducts },
+	tables: { Recipe, Ingredient, RecipeIngredient, RecipeInstruction },
 });
