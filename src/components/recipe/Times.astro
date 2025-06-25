@@ -1,0 +1,38 @@
+---
+import { formatTime } from "@/utils/formatting";
+const { defrostTime, cookingTime, ovenTime, additionalWaitTime } = Astro.props;
+---
+
+<section class="recipe-times">
+	<h2 class="recipe-times__title">Tijden</h2>
+	<ul class="recipe-times__list">
+		{
+			defrostTime && (
+				<li>
+					<strong>Ontdooitijd:</strong> {formatTime(defrostTime)}
+				</li>
+			)
+		}
+		{
+			cookingTime && (
+				<li>
+					<strong>Kooktijd:</strong> {formatTime(cookingTime)}
+				</li>
+			)
+		}
+		{
+			ovenTime && (
+				<li>
+					<strong>Oventijd:</strong> {formatTime(ovenTime)}
+				</li>
+			)
+		}
+		{
+			additionalWaitTime && (
+				<li>
+					<strong>Wachttijd:</strong> {formatTime(additionalWaitTime)}
+				</li>
+			)
+		}
+	</ul>
+</section>

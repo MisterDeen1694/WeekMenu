@@ -1,0 +1,17 @@
+---
+const { title, author, source, cover, timeSummary } = Astro.props;
+---
+
+<h1 class="recipe-page__title">{title}</h1>
+<p class="recipe-times__summary">⏱️ Totale tijd: {timeSummary}</p>
+<div class="recipe-page__author">Auteur: {author ?? "Onbekend"}</div>
+<div class="recipe-page__source">Bron: {source ?? "Onbekend"}</div>
+{
+	cover && (
+		<img
+			src={cover}
+			alt={`Cover van ${title}`}
+			class="recipe-page__cover"
+		/>
+	)
+}

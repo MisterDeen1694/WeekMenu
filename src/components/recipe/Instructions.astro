@@ -1,0 +1,28 @@
+---
+const { instructions } = Astro.props;
+---
+
+<h2 class="recipe-page__section-title">Instructies</h2>
+<ol class="recipe-page__instructions">
+	{
+		instructions.map(
+			(
+				step: { text: string; image: string | null | undefined },
+				index: number
+			) => (
+				<li class="recipe-page__instructions-item">
+					<p>
+						<strong>Stap {index + 1}:</strong> {step.text}
+					</p>
+					{step.image && (
+						<img
+							src={step.image}
+							alt={`Stap ${index + 1}`}
+							class="recipe-page__instructions-image"
+						/>
+					)}
+				</li>
+			)
+		)
+	}
+</ol>

@@ -37,3 +37,28 @@ export function parseInstruction(
 		}
 	);
 }
+
+export function formatTime(minutes: number): string {
+	const hours = Math.floor(minutes / 60);
+	const mins = minutes % 60;
+	if (hours && mins) return `${hours} uur ${mins} min`;
+	if (hours) return `${hours} uur`;
+	return `${mins} min`;
+}
+
+export function formatTimeLabelledShort(
+	defrostTime?: number,
+	cookingTime?: number,
+	ovenTime?: number,
+	additionalWaitTime?: number
+): string {
+	const parts: string[] = [];
+
+	if (defrostTime) parts.push(`Ontdooien ${formatTime(defrostTime)}`);
+	if (cookingTime) parts.push(`Koken ${formatTime(cookingTime)}`);
+	if (ovenTime) parts.push(`Oven ${formatTime(ovenTime)}`);
+	if (additionalWaitTime)
+		parts.push(`Wachten ${formatTime(additionalWaitTime)}`);
+
+	return parts.join(" · ");
+}

@@ -1,0 +1,30 @@
+---
+import type { Ingredient, IngredientWithNutrients, Nutrient } from "@/types";
+import { formatAmount } from "@/utils/formatting";
+const { ingredients } = Astro.props;
+---
+
+<h2 class="recipe-page__section-title">Ingrediënten</h2>
+<ul class="recipe-page__ingredients">
+	{
+		ingredients.map((ing: IngredientWithNutrients) => (
+			<li class="recipe-page__ingredients-item">
+				{ing.name}: {formatAmount(ing.amount)} {ing.unit}
+				{ing.nutrients.length > 0 && (
+					<ul class="recipe-page__nutrients-list">
+						{ing.nutrients.map((nutrient: Nutrient) => {
+							const factor = ing.amount / nutrient.perAmount;
+							const scaledAmount = nutrient.amount * factor;
+							return (
+								<li class="recipe-page__nutrients-item">
+									{nutrient.name}:{" "}
+									{formatAmount(scaledAmount)} {nutrient.unit}
+								</li>
+							);
+						})}
+					</ul>
+				)}
+			</li>
+		))
+	}
+</ul>

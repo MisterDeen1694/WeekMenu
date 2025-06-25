@@ -1,6 +1,10 @@
 ---
-// Imports
+//Comments made with love by chatGPT
+// --- Imports ---
+// CSS voor de pagina
 import "@/assets/styles/RecipePage.css";
+
+// Database en tabel-definities
 import {
 	db,
 	Recipe,
@@ -8,15 +12,37 @@ import {
 	RecipeIngredient,
 	Ingredient as IngredientTable,
 	RecipeInstruction,
+	Nutrient as NutrientTable,
+	IngredientNutrient,
+	RecipeTime,
 } from "astro:db";
-import { parseInstruction, formatAmount, slugify } from "@/utils/formatting";
 
-// Url Params
+// Utility functies voor formatting, parsing en slugify
+import { slugify, formatTimeLabelledShort } from "@/utils/formatting";
+
+// Componenten voor de pagina layout
+import Header from "@/components/recipe/Header.astro";
+import NutritionSummary from "@/components/recipe/NutritionSummary.astro";
+import Times from "@/components/recipe/Times.astro";
+import Ingredients from "@/components/recipe/Ingredients.astro";
+import Instructions from "@/components/recipe/Instructions.astro";
+
+// Helper functies voor data transformatie, voedingswaarden berekenen en portion scaling
+import { groupIngredientsWithNutrients } from "@/utils/transform";
+import { calculateTotalNutrients } from "@/utils/nutrition";
+import { getPortionMultiplier } from "@/utils/scale";
+import { parseInstructions } from "@/utils/instructions";
+
+// --- URL Parameters ophalen ---
+// Haal id en naam (slug) van de receptpagina uit de URL parameters
 const { id, name } = Astro.params as { id: string; name: string };
+// Optioneel: portie en kcal query params
 const portionParam = Astro.url.searchParams.get("portion");
+const kcalParam = Astro.url.searchParams.get("kcal");
+const desiredKcal = kcalParam ? parseFloat(kcalParam) : null;
 
-// Querry database get everything related to the Recipe exept
-// for the instructions and check if result is not null
+// --- Database query ---
+// Haal alle relevante info op over het recept (behalve instructies)
 const result = await db
 	.select({
 		recipeTitle: Recipe.title,
@@ -24,11 +50,24 @@ const result = await db
 		recipeSource: Recipe.source,
 		recipeCover: Recipe.cover,
 		recipePortion: Recipe.portionSize,
+		recipeKcal: Recipe.totalKcal,
+		recipeDefrostTime: RecipeTime.defrostTime,
+		recipeCookingTime: RecipeTime.cookingTime,
+		recipeOvenTime: RecipeTime.ovenTime,
+		recipeAdditionalWaitTime: RecipeTime.additionalWaitTime,
+
 		productId: IngredientTable.id,
 		productName: IngredientTable.name,
 		productUnit: IngredientTable.unit,
 		productAmount: RecipeIngredient.amount,
 		productSlug: IngredientTable.slug,
+
+		nutrientId: NutrientTable.id,
+		nutrientName: NutrientTable.name,
+		nutrientUnit: NutrientTable.unit,
+		perAmount: IngredientNutrient.perAmount,
+		perUnit: IngredientNutrient.perUnit,
+		nutrientAmount: IngredientNutrient.amount,
 	})
 	.from(RecipeIngredient)
 	.innerJoin(
@@ -36,21 +75,34 @@ const result = await db
 		eq(RecipeIngredient.ingredientId, IngredientTable.id)
 	)
 	.innerJoin(Recipe, eq(RecipeIngredient.recipeId, Recipe.id))
+	.innerJoin(RecipeTime, eq(RecipeTime.recipeId, Recipe.id))
+	.leftJoin(
+		IngredientNutrient,
+		eq(IngredientTable.id, IngredientNutrient.ingredientId)
+	)
+	.leftJoin(
+		NutrientTable,
+		eq(IngredientNutrient.nutrientId, NutrientTable.id)
+	)
 	.where(eq(Recipe.id, id));
 
+// Als er geen resultaten zijn, stuur 404 terug
 if (!result.length) {
 	return new Response(null, {
 		status: 404,
 	});
 }
 
-// Fixes url if user did not enter correct slug
+// --- URL Slug check ---
+// Controleer of de slug in de URL overeenkomt met de titel van het recept (ge-slugified)
+// Zo niet, redirect naar de correcte URL
 const expectedSlug = slugify(result[0]?.recipeTitle);
 if (name !== expectedSlug) {
 	return Astro.redirect(`/recipe/${id}/${expectedSlug}`);
 }
 
-// Querys the database for all instructions
+// --- Query voor instructies ---
+// Haal alle instructies op, geordend op stapnummer
 const instructions = await db
 	.select({
 		stepNumber: RecipeInstruction.stepNumber,
@@ -61,45 +113,61 @@ const instructions = await db
 	.where(eq(RecipeInstruction.recipeId, id))
 	.orderBy(RecipeInstruction.stepNumber);
 
-// Group all the information in to a single variable
+// --- Data structureren ---
+// Bundel alle data in één 'recipe' object voor makkelijker gebruik in de pagina
 const recipe = {
 	title: result[0]?.recipeTitle,
 	author: result[0]?.recipeAuthor,
 	source: result[0]?.recipeSource,
 	cover: result[0]?.recipeCover,
+	defrostTime: result[0]?.recipeDefrostTime,
+	cookingTime: result[0]?.recipeCookingTime,
+	ovenTime: result[0]?.recipeOvenTime,
+	additionalWaitTime: result[0]?.recipeAdditionalWaitTime,
 	portionSize: result[0]?.recipePortion,
-	ingredients: result.map((row) => ({
-		id: row.productId,
-		name: row.productName,
-		unit: row.productUnit,
-		amount: row.productAmount,
-		slug: row.productSlug,
-	})),
+	ingredients: groupIngredientsWithNutrients(result), // Ingrediënten gegroepeerd met bijbehorende voedingswaarden
 	instructions: instructions.map((step) => ({
 		instruction: step.instruction,
 		image: step.image,
 	})),
 };
 
-// scale ingredients to requested portion
-const portionNumber = portionParam
-	? parseInt(portionParam)
-	: recipe.portionSize;
-const portionMultiplier = portionNumber / recipe.portionSize;
+// --- Portie multiplier bepalen ---
+// Bepaal de schaalfactor op basis van gewenste kcal of portie grootte
+const finalMultiplier = getPortionMultiplier(
+	desiredKcal,
+	result[0]?.recipeKcal,
+	recipe.portionSize,
+	portionParam
+);
 
-const parsedInstructions = recipe.instructions.map((step) => ({
-	...step,
-	text: parseInstruction(
-		step.instruction,
-		recipe.ingredients,
-		portionMultiplier
-	),
-}));
-
+// --- Ingrediënten schalen ---
+// Pas de hoeveelheden van de ingrediënten aan met de multiplier
 const scaledIngredients = recipe.ingredients.map((ing) => ({
 	...ing,
-	amount: ing.amount * portionMultiplier,
+	amount: ing.amount * finalMultiplier,
 }));
+
+// --- Totale voedingswaarden berekenen ---
+// Bereken totaal aan voedingswaarden van de geschaalde ingrediënten
+const totalNutrients = calculateTotalNutrients(scaledIngredients);
+
+// --- Tijd samenvatting formatteren ---
+// Maak een korte samenvatting van alle tijden (ontdooien, koken etc.)
+const timeSummary = formatTimeLabelledShort(
+	recipe.defrostTime,
+	recipe.cookingTime,
+	recipe.ovenTime,
+	recipe.additionalWaitTime
+);
+
+// --- Instructies parsen ---
+// Voeg aan elke instructie parsed tekst toe met de juiste ingredienthoeveelheden
+const parsedInstructions = parseInstructions(
+	recipe.instructions,
+	recipe.ingredients,
+	finalMultiplier
+);
 ---
 
 <html lang="nl">
@@ -109,53 +177,30 @@ const scaledIngredients = recipe.ingredients.map((ing) => ({
 		<title>{recipe.title}</title>
 	</head>
 	<body class="recipe-page">
-		<h1 class="recipe-page__title">{recipe.title}</h1>
-		<div class="recipe-page__author">
-			Auteur: {recipe.author ?? "Onbekend"}
-		</div>
-		<div class="recipe-page__source">
-			Bron: {recipe.source ?? "Onbekend"}
-		</div>
+		<!-- Header met titel, auteur, bron en tijdsinfo -->
+		<Header
+			title={recipe.title}
+			author={recipe.author}
+			source={recipe.source}
+			cover={recipe.cover}
+			timeSummary={timeSummary}
+		/>
 
-		{
-			recipe.cover ? (
-				<img
-					src={recipe.cover}
-					alt={`Cover van ${recipe.title}`}
-					class="recipe-page__cover"
-				/>
-			) : null
-		}
+		<!-- Nutrition summary component met totaal voedingswaarden -->
+		<NutritionSummary totalNutrients={totalNutrients} />
 
-		<h2 class="recipe-page__section-title">Ingrediënten</h2>
-		<ul class="recipe-page__ingredients">
-			{
-				scaledIngredients.map((ing) => (
-					<li class="recipe-page__ingredients-item">
-						{ing.name}: {formatAmount(ing.amount)} {ing.unit}
-					</li>
-				))
-			}
-		</ul>
+		<!-- Component die kooktijden laat zien -->
+		<Times
+			defrostTime={recipe.defrostTime}
+			cookingTime={recipe.cookingTime}
+			ovenTime={recipe.ovenTime}
+			additionalWaitTime={recipe.additionalWaitTime}
+		/>
 
-		<h2 class="recipe-page__section-title">Instructies</h2>
-		<ol class="recipe-page__instructions">
-			{
-				parsedInstructions.map((step, index) => (
-					<li class="recipe-page__instructions-item">
-						<p>
-							<strong>Stap {index + 1}:</strong> {step.text}
-						</p>
-						{step.image && (
-							<img
-								src={step.image}
-								alt={`Stap ${index + 1}`}
-								class="recipe-page__instructions-image"
-							/>
-						)}
-					</li>
-				))
-			}
-		</ol>
+		<!-- Ingrediënten lijst met geschaalde hoeveelheden -->
+		<Ingredients ingredients={scaledIngredients} />
+
+		<!-- Stap-voor-stap kookinstructies met parsing -->
+		<Instructions instructions={parsedInstructions} />
 	</body>
 </html>

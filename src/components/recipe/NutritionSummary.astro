@@ -1,0 +1,23 @@
+---
+import type { Nutrient } from "@/types";
+import { formatAmount } from "@/utils/formatting";
+const { totalNutrients } = Astro.props;
+---
+
+<section class="recipe-page__nutrition-summary">
+	<h2 class="recipe-page__section-title">Voedingswaarden totaal</h2>
+	<ul class="recipe-page__nutrition-list">
+		{
+			totalNutrients.map((nutrient: Nutrient) => (
+				<li class="recipe-page__nutrition-item">
+					<span class="recipe-page__nutrition-name">
+						{nutrient.name}:
+					</span>
+					<span class="recipe-page__nutrition-amount">
+						{formatAmount(nutrient.amount)} {nutrient.unit}
+					</span>
+				</li>
+			))
+		}
+	</ul>
+</section>
