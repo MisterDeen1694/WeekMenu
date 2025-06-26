@@ -1,0 +1,184 @@
+---
+import OnboardingProgress from "@/components/onboarding/OnboardingProgress.astro";
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+---
+
+<DefaultLayout>
+	<section class="onboarding">
+		<div class="onboarding__container">
+			<OnboardingProgress currentStep="3" />
+
+			<h1 class="onboarding__title">BMI-informatie</h1>
+			<p class="onboarding__text">
+				Vul je gegevens in om je BMI te berekenen.
+			</p>
+
+			<form id="bmiForm" class="onboarding__form">
+				<div class="form-group">
+					<label for="gender" class="onboarding__label"
+						>Geslacht</label
+					>
+					<select
+						id="gender"
+						name="gender"
+						class="onboarding__select"
+						required
+					>
+						<option value="">Maak een keuze</option>
+						<option value="male">Man</option>
+						<option value="female">Vrouw</option>
+						<option value="other">Anders</option>
+					</select>
+				</div>
+
+				<div class="form-group">
+					<label for="age" class="onboarding__label"
+						>Leeftijd (in jaren)</label
+					>
+					<input
+						type="number"
+						id="age"
+						name="age"
+						class="onboarding__input"
+						min="1"
+						required
+					/>
+				</div>
+
+				<div class="form-group">
+					<label for="height" class="onboarding__label"
+						>Lengte (in cm)</label
+					>
+					<input
+						type="number"
+						id="height"
+						name="height"
+						class="onboarding__input"
+						min="50"
+						required
+					/>
+				</div>
+
+				<div class="form-group">
+					<label for="weight" class="onboarding__label"
+						>Gewicht (in kg)</label
+					>
+					<input
+						type="number"
+						id="weight"
+						name="weight"
+						class="onboarding__input"
+						min="10"
+						required
+					/>
+				</div>
+				<div class="form-group">
+					<label class="onboarding__label" for="activity"
+						>Hoe actief ben je gemiddeld?</label
+					>
+					<select
+						id="activity"
+						name="activity"
+						class="onboarding__select"
+						required
+					>
+						<option value="1.2">Weinig tot geen beweging</option>
+						<option value="1.375">Licht actief (1–3x/week)</option>
+						<option value="1.55">Matig actief (3–5x/week)</option>
+						<option value="1.725">Zeer actief (6–7x/week)</option>
+						<option value="1.9"
+							>Extreem actief (zwaar werk + sporten)</option
+						>
+					</select>
+				</div>
+
+				<button
+					id="calculateBtn"
+					type="button"
+					class="onboarding__button">Bereken BMI</button
+				>
+
+				<p
+					id="bmiResult"
+					class="onboarding__text"
+					style="display: none;"
+				>
+				</p>
+
+				<button
+					id="nextBtn"
+					type="submit"
+					class="onboarding__button"
+					style="display: none;">Volgende</button
+				>
+			</form>
+		</div>
+	</section>
+
+	<script type="module">
+		const form = document.querySelector("#bmiForm");
+		const calculateBtn = document.querySelector("#calculateBtn");
+		const nextBtn = document.querySelector("#nextBtn");
+		const bmiResult = document.querySelector("#bmiResult");
+
+		calculateBtn.addEventListener("click", () => {
+			const gender = form.gender.value;
+			const age = Number(form.age.value);
+			const height = Number(form.height.value);
+			const weight = Number(form.weight.value);
+
+			if (!gender || !age || !height || !weight) {
+				alert("Vul alle velden in.");
+				return;
+			}
+
+			// BMI berekening
+			const heightM = height / 100;
+			const bmi = weight / (heightM * heightM);
+			const roundedBMI = bmi.toFixed(1);
+
+			// BMR berekening (Mifflin-St Jeor)
+			let bmr = 0;
+			if (gender === "male") {
+				bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+			} else if (gender === "female") {
+				bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+			} else {
+				// gemiddelde waarde als gender onbekend is
+				bmr = 10 * weight + 6.25 * height - 5 * age;
+			}
+
+			// kcal behoefte bij weinig actieve levensstijl
+			const activityFactor = Number(form.activity.value);
+			const kcalNeeds = Math.round(bmr * activityFactor);
+
+			// Tonen
+			bmiResult.innerHTML = `
+      Jouw BMI is <strong>${roundedBMI}</strong><br />
+      Je geschatte dagelijkse behoefte is <strong>${kcalNeeds} kcal</strong> (bij lage activiteit).
+    `;
+			bmiResult.style.display = "block";
+			nextBtn.style.display = "inline-block";
+
+			// Opslaan in localStorage
+			localStorage.setItem(
+				"onboardingBMI",
+				JSON.stringify({
+					gender,
+					age,
+					height,
+					weight,
+					bmi: Number(roundedBMI),
+					bmr: Math.round(bmr),
+					kcalNeeds,
+					activityFactor,
+				})
+			);
+		});
+
+		form.addEventListener("submit", (e) => {
+			e.preventDefault();
+			window.location.href = "/onboarding/afronden";
+		});
+	</script>
+</DefaultLayout>

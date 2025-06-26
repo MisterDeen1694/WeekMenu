@@ -1,0 +1,34 @@
+---
+import "@/assets/styles/defaultLayout.css";
+import "@/assets/styles/onboarding.css";
+
+const { title = "Welkom", description = "" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="nl">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+
+		<link rel="stylesheet" href="/assets/styles/base.css" />
+		<link rel="stylesheet" href="/assets/styles/onboarding.css" />
+	</head>
+	<body class="layout layout--public">
+		<header class="layout__header">
+			<div class="layout__header-inner">
+				<a href="/" class="layout__logo">🍽️ JouwAppNaam</a>
+			</div>
+		</header>
+
+		<slot />
+
+		<footer class="layout__footer">
+			<p class="layout__footer-text">
+				© {new Date().getFullYear()} JouwAppNaam. Alle rechten voorbehouden.
+			</p>
+		</footer>
+	</body>
+</html>

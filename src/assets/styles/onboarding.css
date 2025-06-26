@@ -1,0 +1,210 @@
+/* Basis kleuren vervangen zonder CSS-variabelen */
+.onboarding {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	background-color: #f5f7fa; /* zacht lichtblauw/grijs */
+	padding: 2rem;
+}
+
+.onboarding__container {
+	max-width: 600px;
+	text-align: center;
+	background: #ffffff; /* wit */
+	padding: 3rem 2rem;
+	border-radius: 12px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+}
+
+.onboarding__title {
+	font-size: 2rem;
+	margin-bottom: 1rem;
+	color: #222222; /* donkergrijs */
+}
+
+.onboarding__text {
+	font-size: 1.1rem;
+	margin-bottom: 1.5rem;
+	color: #555555; /* medium grijs */
+}
+
+.onboarding__button {
+	background-color: #2563eb; /* helder blauw */
+	color: white;
+	border: none;
+	padding: 0.75rem 2rem;
+	border-radius: 8px;
+	font-size: 1rem;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	align-self: flex-start;
+	margin-top: 1rem;
+}
+
+.onboarding__button:hover {
+	background-color: #1e40af; /* donkerder blauw hover */
+}
+
+.onboarding-progress {
+	margin: 2rem auto;
+	max-width: 700px;
+	padding: 0 1rem;
+}
+
+.onboarding-progress__list {
+	list-style: none;
+	display: flex;
+	justify-content: space-between;
+	padding: 0;
+	margin: 0;
+	position: relative;
+	counter-reset: step;
+}
+
+.onboarding-progress__step {
+	text-align: center;
+	flex: 1;
+	position: relative;
+	color: #999999; /* lichtgrijs */
+}
+
+.onboarding-progress__step::after {
+	content: "";
+	position: absolute;
+	top: 1.2rem;
+	left: 50%;
+	height: 2px;
+	width: 100%;
+	background: #dddfe2; /* lichte lijn */
+	z-index: -1;
+}
+
+.onboarding-progress__step:first-child::after {
+	left: 50%;
+	width: 50%;
+}
+.onboarding-progress__step:last-child::after {
+	width: 50%;
+}
+
+.onboarding-progress__step:not(:first-child)::before {
+	content: "";
+	position: absolute;
+	top: 1.2rem;
+	left: -50%;
+	width: 100%;
+	height: 2px;
+	background-color: #dddfe2;
+	z-index: -1;
+}
+
+.onboarding-progress__number {
+	display: inline-block;
+	width: 2rem;
+	height: 2rem;
+	line-height: 2rem;
+	border-radius: 50%;
+	background: #ffffff; /* wit */
+	border: 2px solid #dddfe2;
+	font-weight: bold;
+	color: inherit;
+	margin-bottom: 0.25rem;
+}
+
+.onboarding-progress__label {
+	display: block;
+	font-size: 0.85rem;
+	font-weight: 500;
+}
+
+.onboarding-progress__step.active .onboarding-progress__number {
+	background-color: #2563eb;
+	color: white;
+	border-color: #2563eb;
+}
+
+.onboarding-progress__step.current .onboarding-progress__label {
+	font-weight: bold;
+	color: #222222;
+}
+
+.onboarding__form {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	margin-top: 1.5rem;
+	text-align: left;
+	max-width: 100%;
+}
+
+.form-group {
+	display: flex;
+	flex-direction: column;
+}
+
+.onboarding__label {
+	font-weight: 600;
+	margin-bottom: 0.3rem;
+	color: #222222;
+	font-size: 1rem;
+	user-select: none;
+}
+
+.onboarding__input,
+.onboarding__select {
+	width: 100%;
+	padding: 0.6rem 0.75rem;
+	font-size: 1rem;
+	border: 1.5px solid #dddfe2;
+	border-radius: 8px;
+	background-color: #fafafa;
+	color: #222222;
+	transition: border-color 0.2s ease;
+	font-family: inherit;
+	box-sizing: border-box;
+}
+
+.onboarding__input:focus,
+.onboarding__select:focus {
+	outline: none;
+	border-color: #2563eb;
+	box-shadow: 0 0 6px #2563ebaa;
+}
+
+fieldset.form-group {
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+legend.onboarding__label {
+	margin-bottom: 0.6rem;
+	font-weight: 600;
+}
+
+.onboarding__radio-label {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.4rem;
+	font-size: 1rem;
+	cursor: pointer;
+	color: #222222;
+	user-select: none;
+}
+
+.onboarding__radio-label input[type="radio"] {
+	cursor: pointer;
+	accent-color: #2563eb;
+	width: 1.1rem;
+	height: 1.1rem;
+}
+
+.onboarding__disclaimer {
+	font-size: 0.95rem;
+	margin-top: 1.5rem;
+	color: #666;
+	text-align: left;
+	line-height: 1.5;
+}

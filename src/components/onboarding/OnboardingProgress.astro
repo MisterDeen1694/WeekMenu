@@ -1,0 +1,32 @@
+---
+const { currentStep } = Astro.props;
+
+const steps = [
+	{ name: "Intro", slug: "introductie" },
+	{ name: "Jouw Keuken", slug: "keuken" },
+	{ name: "Voorkeuren", slug: "voorkeur" },
+	{ name: "BMI", slug: "bmi" },
+	{ name: "Account & Betaling", slug: "account" },
+];
+
+function isActive(index: number) {
+	return index <= currentStep;
+}
+---
+
+<nav class="onboarding-progress" aria-label="Onboarding stappen">
+	<ol class="onboarding-progress__list">
+		{
+			steps.map((step, index) => (
+				<li
+					class={`onboarding-progress__step ${isActive(index) ? "active" : ""} ${
+						currentStep === index ? "current" : ""
+					}`}
+				>
+					<span class="onboarding-progress__number">{index + 1}</span>
+					<span class="onboarding-progress__label">{step.name}</span>
+				</li>
+			))
+		}
+	</ol>
+</nav>

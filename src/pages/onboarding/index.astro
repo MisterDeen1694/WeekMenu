@@ -1,0 +1,27 @@
+---
+import Layout from "@/layouts/DefaultLayout.astro"; // Of een andere layout als je die gebruikt
+import OnboardingProgress from "@/components/onboarding/OnboardingProgress.astro";
+---
+
+<Layout>
+	<main class="onboarding onboarding--intro">
+		<section class="onboarding__container">
+			<OnboardingProgress currentStep={0} />
+
+			<h1 class="onboarding__title">Welkom bij [JouwAppNaam]</h1>
+			<p class="onboarding__text">
+				We gaan je helpen om gepersonaliseerde weekmenu’s te genereren,
+				op basis van je huishouden, kookvoorkeuren en voedingsbehoeftes.
+			</p>
+			<p class="onboarding__text">
+				De onboarding bestaat uit een paar korte stappen. Het duurt maar
+				een minuutje!
+			</p>
+			<form action="/onboarding/keuken" method="get">
+				<button class="onboarding__button" type="submit"
+					>Start Onboarding</button
+				>
+			</form>
+		</section>
+	</main>
+</Layout>

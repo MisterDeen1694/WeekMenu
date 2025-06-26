@@ -1,0 +1,74 @@
+---
+import OnboardingProgress from "@/components/onboarding/OnboardingProgress.astro";
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+---
+
+<DefaultLayout>
+	<OnboardingProgress currentStep={1} />
+	<div class="onboarding">
+		<div class="onboarding__container">
+			<h1 class="onboarding__title">Jouw keuken</h1>
+			<p class="onboarding__text">
+				Selecteer welke apparaten je in huis hebt:
+			</p>
+
+			<form id="keuken-form" class="onboarding__form">
+				<fieldset class="form-group">
+					<legend class="onboarding__label">Apparaten</legend>
+
+					<label class="onboarding__radio-label">
+						<input type="checkbox" name="appliances" value="oven" />
+						Oven
+					</label>
+					<label class="onboarding__radio-label">
+						<input
+							type="checkbox"
+							name="appliances"
+							value="magnetron"
+						/> Magnetron
+					</label>
+					<label class="onboarding__radio-label">
+						<input
+							type="checkbox"
+							name="appliances"
+							value="soepmaker"
+						/> Soepmaker
+					</label>
+					<label class="onboarding__radio-label">
+						<input
+							type="checkbox"
+							name="appliances"
+							value="airfryer"
+						/>
+						Airfryer
+					</label>
+					<!-- Voeg meer apparaten toe als je wil -->
+				</fieldset>
+
+				<button type="submit" class="onboarding__button"
+					>Volgende</button
+				>
+			</form>
+		</div>
+	</div>
+
+	<script>
+		const form = document.getElementById("keuken-form") as HTMLFormElement;
+		form.addEventListener("submit", (e) => {
+			e.preventDefault();
+
+			const formData = new FormData(form);
+			// Haal alle geselecteerde apparaten (checkboxes)
+			const appliances = formData.getAll("appliances");
+
+			// Opslaan in sessionStorage
+			sessionStorage.setItem(
+				"onboarding-keuken",
+				JSON.stringify({ appliances })
+			);
+
+			// Redirect naar volgende stap, bijvoorbeeld email
+			window.location.href = "/onboarding/voorkeuren";
+		});
+	</script>
+</DefaultLayout>

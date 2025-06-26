@@ -1,0 +1,138 @@
+---
+import OnboardingProgress from "@/components/onboarding/OnboardingProgress.astro";
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+---
+
+<DefaultLayout>
+	<section class="onboarding">
+		<div class="onboarding__container">
+			<OnboardingProgress currentStep={4} />
+			<h1 class="onboarding__title">Bijna klaar!</h1>
+			<p class="onboarding__text">
+				Kies hoe je wilt inloggen en vul je e-mailadres in.
+			</p>
+
+			<form id="finalForm" class="onboarding__form">
+				<fieldset class="form-group">
+					<legend class="onboarding__label">Inlogmethode</legend>
+
+					<label class="onboarding__radio-label">
+						<input
+							type="radio"
+							name="loginMethod"
+							value="magic"
+							checked
+						/>
+						Magic link / code via e-mail
+					</label>
+
+					<label class="onboarding__radio-label">
+						<input
+							type="radio"
+							name="loginMethod"
+							value="password"
+						/>
+						Met een wachtwoord
+					</label>
+				</fieldset>
+
+				<div class="form-group">
+					<label class="onboarding__label" for="email"
+						>E-mailadres</label
+					>
+					<input
+						type="email"
+						id="email"
+						name="email"
+						class="onboarding__input"
+						required
+					/>
+				</div>
+
+				<div
+					id="passwordFields"
+					class="form-group"
+					style="display: none;"
+				>
+					<label class="onboarding__label" for="password"
+						>Wachtwoord</label
+					>
+					<input
+						type="password"
+						id="password"
+						name="password"
+						class="onboarding__input"
+					/>
+				</div>
+
+				<p class="onboarding__text onboarding__disclaimer">
+					Door op "Account aanmaken" te klikken, ga je akkoord met een
+					betaling van <strong>€7,99 per maand</strong>. Je kunt op
+					elk moment opzeggen.
+				</p>
+
+				<button type="submit" class="onboarding__button"
+					>Account aanmaken</button
+				>
+			</form>
+		</div>
+	</section>
+
+	<script type="module">
+		const form = document.getElementById("finalForm");
+		const loginRadios = form.querySelectorAll('input[name="loginMethod"]');
+		const passwordFields = document.getElementById("passwordFields");
+
+		// toggle wachtwoordvelden
+		loginRadios.forEach((radio) => {
+			radio.addEventListener("change", () => {
+				passwordFields.style.display =
+					form.loginMethod.value === "password" ? "block" : "none";
+			});
+		});
+
+		form.addEventListener("submit", async (e) => {
+			e.preventDefault();
+
+			const email = form.email.value;
+			const loginMethod = form.loginMethod.value;
+			const password = form.password?.value || null;
+
+			if (!email) return alert("Vul een geldig e-mailadres in.");
+			if (
+				loginMethod === "password" &&
+				(!password || password.length < 6)
+			) {
+				return alert(
+					"Voer een geldig wachtwoord in (minimaal 6 tekens)."
+				);
+			}
+
+			const gegevens = {
+				email,
+				loginMethod,
+				password,
+				keuken: JSON.parse(
+					localStorage.getItem("onboardingKeuken") || "{}"
+				),
+				voorkeuren: JSON.parse(
+					localStorage.getItem("onboardingVoorkeuren") || "{}"
+				),
+				bmi: JSON.parse(localStorage.getItem("onboardingBMI") || "{}"),
+			};
+
+			const res = await fetch("/api/onboarding/complete", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(gegevens),
+			});
+
+			if (res.ok) {
+				localStorage.clear();
+				window.location.href = "/inloggen?status=verzonden";
+			} else {
+				alert("Er is iets misgegaan bij het aanmaken van je account.");
+			}
+		});
+	</script>
+</DefaultLayout>

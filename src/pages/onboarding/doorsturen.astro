@@ -1,0 +1,27 @@
+---
+import OnboardingProgress from "@/components/onboarding/OnboardingProgress.astro";
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+---
+
+<DefaultLayout>
+	<div class="onboarding">
+		<div class="onboarding__container">
+			<OnboardingProgress currentStep={2} />
+			<p class="onboarding__text">
+				Een ogenblikje, we leiden je door naar de volgende stap...
+			</p>
+		</div>
+	</div>
+
+	<script type="module">
+		const preferences = JSON.parse(
+			localStorage.getItem("onboardingPreferences") || "{}"
+		);
+
+		if (preferences.kcalPreference === "perBMI") {
+			window.location.href = "/onboarding/bmi";
+		} else {
+			window.location.href = "/onboarding/afronden";
+		}
+	</script>
+</DefaultLayout>

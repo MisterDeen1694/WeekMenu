@@ -1,0 +1,112 @@
+---
+import OnboardingProgress from "@/components/onboarding/OnboardingProgress.astro";
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+
+const days = [
+	{ value: "monday", label: "Maandag" },
+	{ value: "tuesday", label: "Dinsdag" },
+	{ value: "wednesday", label: "Woensdag" },
+	{ value: "thursday", label: "Donderdag" },
+	{ value: "friday", label: "Vrijdag" },
+	{ value: "saturday", label: "Zaterdag" },
+	{ value: "sunday", label: "Zondag" },
+];
+---
+
+<DefaultLayout>
+	<div class="onboarding">
+		<div class="onboarding__container">
+			<OnboardingProgress currentStep={2} />
+
+			<h1 class="onboarding__title">Voorkeuren</h1>
+			<p class="onboarding__text">
+				Vertel ons hoe we jouw recepten kunnen afstemmen.
+			</p>
+
+			<form class="onboarding__form" id="preferences-form">
+				<div class="form-group">
+					<label class="onboarding__label" for="householdSize"
+						>Aantal personen in je huishouden</label
+					>
+					<input
+						class="onboarding__input"
+						type="number"
+						id="householdSize"
+						name="householdSize"
+						min="1"
+						required
+					/>
+				</div>
+
+				<fieldset class="form-group">
+					<legend class="onboarding__label">Kcal voorkeur</legend>
+					<label class="onboarding__radio-label">
+						<input
+							type="radio"
+							name="kcalPreference"
+							value="perPerson"
+							checked
+						/>
+						Per persoon
+					</label>
+					<label class="onboarding__radio-label">
+						<input
+							type="radio"
+							name="kcalPreference"
+							value="perBMI"
+						/>
+						Per BMI
+					</label>
+				</fieldset>
+
+				<div class="form-group">
+					<label class="onboarding__label" for="menuDay"
+						>Kies een dag voor weekmenu generatie</label
+					>
+					<select
+						class="onboarding__select"
+						name="menuDay"
+						id="menuDay"
+					>
+						{
+							days.map((day) => (
+								<option value={day.value}>{day.label}</option>
+							))
+						}
+					</select>
+				</div>
+
+				<button type="submit" class="onboarding__button"
+					>Volgende</button
+				>
+			</form>
+		</div>
+	</div>
+
+	<script type="module">
+		const form = document.querySelector("#preferences-form");
+
+		// Vul bestaande waarden in vanuit localStorage
+		const saved = JSON.parse(
+			localStorage.getItem("onboardingPreferences") || "{}"
+		);
+		if (saved.householdSize) form.householdSize.value = saved.householdSize;
+		if (saved.kcalPreference) {
+			form.kcalPreference.forEach((radio) => {
+				radio.checked = radio.value === saved.kcalPreference;
+			});
+		}
+		if (saved.menuDay) form.menuDay.value = saved.menuDay;
+
+		form.addEventListener("submit", (e) => {
+			e.preventDefault();
+			const data = {
+				householdSize: form.householdSize.value,
+				kcalPreference: form.kcalPreference.value,
+				menuDay: form.menuDay.value,
+			};
+			localStorage.setItem("onboardingPreferences", JSON.stringify(data));
+			window.location.href = "/onboarding/doorsturen";
+		});
+	</script>
+</DefaultLayout>
